@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rituel</title>
+<meta name="theme-color" content="#050505">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rituel">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="preload" href="fonts/jost-300.woff2" as="font" type="font/woff2" crossorigin>
+<style>@font-face{font-family:"Jost";font-style:normal;font-weight:100;font-display:swap;src:url("fonts/jost-100.woff2") format("woff2")}
+@font-face{font-family:"Jost";font-style:normal;font-weight:200;font-display:swap;src:url("fonts/jost-200.woff2") format("woff2")}
+@font-face{font-family:"Jost";font-style:normal;font-weight:300;font-display:swap;src:url("fonts/jost-300.woff2") format("woff2")}
+@font-face{font-family:"Jost";font-style:normal;font-weight:400;font-display:swap;src:url("fonts/jost-400.woff2") format("woff2")}
+@font-face{font-family:"Jost";font-style:normal;font-weight:500;font-display:swap;src:url("fonts/jost-500.woff2") format("woff2")}
+
+/* Layout : une colonne centrée, beaucoup d'air, aucun cadre. Blanc pur sur quasi-noir ; la couleur n'existe que dans la roue. */
+:root{
+  --bg:#050505;
+  --fg:#ffffff;
+  --font:"Jost","Futura","Avenir Next","Century Gothic",system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1);
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg);margin:0;min-height:100%}
+html{-webkit-text-size-adjust:100%}
+body{touch-action:manipulation;-webkit-user-select:none;user-select:none;overscroll-behavior-y:none}
+input{-webkit-user-select:text;user-select:text}
+[hidden]{display:none!important}
+body{font-family:var(--font);font-weight:300;font-size:15px;letter-spacing:.01em;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;transition:transform .25s var(--ease)}
+button:active{transform:scale(.94)}
+:focus-visible{outline:1px solid var(--fg);outline-offset:6px;border-radius:2px}
+
+.app{max-width:440px;margin:0 auto;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-block:calc(44px + env(safe-area-inset-top,0px)) calc(110px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:44px;text-align:center}
+
+/* animations d'entrée */
+.app.anim .st{animation:rise .7s var(--ease) both;animation-delay:calc(var(--i,0) * 60ms)}
+.app.anim.from-right .st{animation-name:fromR}
+.app.anim.from-left .st{animation-name:fromL}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}}
+@keyframes fromR{from{opacity:0;transform:translateX(36px)}}
+@keyframes fromL{from{opacity:0;transform:translateX(-36px)}}
+
+.head{display:flex;flex-direction:column;gap:10px}
+.brand{font-size:12px;font-weight:400;letter-spacing:.42em;text-transform:lowercase;margin-right:-.42em}
+.date{font-size:15px}
+
+.demo{display:flex;flex-direction:column;gap:14px;align-items:center;font-size:14px;line-height:1.7;max-width:30ch}
+.link{font-size:14px;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:5px}
+
+.chips{display:flex;gap:26px;overflow-x:auto;scrollbar-width:none;max-width:100%;padding:4px 2px 12px}
+.chips::-webkit-scrollbar{display:none}
+.chips-wrap{display:flex;justify-content:center;max-width:100%}
+.chip{flex:none;position:relative;font-size:14px;text-transform:lowercase;white-space:nowrap;padding-bottom:4px}
+.chip[aria-pressed="true"]{font-weight:500}
+.chip[aria-pressed="true"]::after{content:"";position:absolute;left:50%;bottom:-6px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--fg);animation:dotin .4s var(--ease)}
+@keyframes dotin{from{transform:scale(0)}}
+
+.wheel-block{display:flex;flex-direction:column;align-items:center;gap:18px;width:100%}
+.month{display:flex;align-items:center;justify-content:center;gap:28px;font-size:14px;text-transform:lowercase}
+.month button{font-size:22px;font-weight:200;width:36px;height:36px;display:grid;place-items:center}
+.month button:disabled{visibility:hidden}
+.month span{min-width:9ch}
+.wheel-wrap{position:relative;width:min(100%,340px);aspect-ratio:1;max-width:100%}
+#wheel{width:100%;height:100%;display:block;touch-action:pan-y}
+.center{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.center b{display:block;font-size:44px;font-weight:200;line-height:1}
+.center span{display:block;font-size:12px;margin-top:8px;text-transform:lowercase;letter-spacing:.08em}
+
+.score{display:flex;flex-direction:column;align-items:center;gap:12px}
+.pct{font-size:clamp(88px,30vw,128px);font-weight:100;letter-spacing:-.04em;line-height:.85;font-variant-numeric:tabular-nums;margin-right:-.04em}
+.pct small{font-size:.38em;font-weight:200;letter-spacing:0;margin-left:.06em}
+.mention{font-size:14px;line-height:1.7}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%}
+.stat{display:flex;flex-direction:column;gap:8px;align-items:center;min-width:0}
+.stat b{font-size:32px;font-weight:200;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;line-height:1.4}
+.note{font-size:14px;line-height:1.8;max-width:32ch}
+.note b{font-weight:500}
+
+.sect{display:flex;flex-direction:column;align-items:center;gap:22px;width:100%}
+.sect-h{display:flex;flex-direction:column;align-items:center;gap:10px}
+.sect-t{font-size:15px;font-weight:400;text-transform:lowercase}
+.list{display:flex;flex-direction:column;gap:6px;width:100%}
+.row{display:grid;grid-template-columns:28px 1fr 48px;align-items:center;gap:12px;padding:12px 4px;width:100%;min-width:0}
+.mark{width:14px;height:14px;border-radius:50%;border:1px solid var(--fg);justify-self:center;transition:background .3s var(--ease),transform .3s var(--ease)}
+.row[aria-checked="true"] .mark{background:var(--fg)}
+.row.pop .mark{animation:pop .5s var(--ease)}
+@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+.name{font-size:17px;text-transform:lowercase;min-width:0;overflow-wrap:anywhere}
+.row[aria-checked="true"] .name{font-weight:400}
+.count{font-size:12px;font-variant-numeric:tabular-nums;justify-self:end}
+.empty{font-size:14px;line-height:1.7;max-width:28ch}
+
+/* rubriques */
+.add{display:flex;align-items:flex-end;gap:16px;width:100%;max-width:320px}
+.add input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px solid var(--fg);padding:10px 2px;font-size:17px;text-align:center;border-radius:0;-webkit-appearance:none;text-transform:lowercase}
+.add input::placeholder{color:var(--fg)}
+.add input:focus{outline:none;border-bottom-width:2px}
+.rlist{display:flex;flex-direction:column;gap:30px;width:100%}
+.rrow{display:flex;flex-direction:column;align-items:center;gap:8px}
+.rrow .name{font-size:20px}
+.meta{display:flex;gap:18px;font-size:12px;align-items:center;flex-wrap:wrap;justify-content:center}
+.meta button{font-size:12px;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+.rrow input{background:transparent;border:0;border-bottom:1px solid var(--fg);padding:6px 2px;font-size:20px;text-align:center;width:min(100%,260px);border-radius:0;text-transform:lowercase}
+.rrow input:focus{outline:none}
+.foot{font-size:12px;line-height:1.8;max-width:34ch}
+
+/* barre d'onglets */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(to top,var(--bg) 70%,rgba(5,5,5,0));padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+.tabs-in{position:relative;max-width:300px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr}
+.tab{padding:24px 0 26px;font-size:14px;text-transform:lowercase;letter-spacing:.06em}
+.tab[aria-selected="true"]{font-weight:500}
+.ind{position:absolute;bottom:14px;left:25%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--fg);transition:left .5s var(--ease)}
+.tabs-in[data-on="rub"] .ind{left:75%}
+
+@media (prefers-reduced-motion:reduce){*,*::after{transition:none!important;animation:none!important}}
+
+.msg{font-size:13px;line-height:1.7;max-width:30ch}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<nav class="tabs" aria-label="Navigation">
+  <div class="tabs-in" id="tabs" role="tablist" data-on="jour">
+    <button class="tab" id="tab-jour" role="tab" aria-selected="true" data-tab="jour">jour</button>
+    <button class="tab" id="tab-rub" role="tab" aria-selected="false" data-tab="rub">rubriques</button>
+    <span class="ind" aria-hidden="true"></span>
+  </div>
+</nav>
+
+<script>
+(() => {
+  const LS = "rituel.v1";
+  const STOPS = [
+    [0.00,[123,47,247]],   // violet
+    [0.18,[192,22,158]],   // pourpre
+    [0.36,[255,77,109]],   // corail
+    [0.54,[255,159,28]],   // ambre
+    [0.70,[228,242,58]],   // chartreuse
+    [0.85,[61,220,151]],   // vert d'eau
+    [1.00,[123,47,247]]
+  ];
+  const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+  const JOURS = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+  const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const pad = n => String(n).padStart(2,"0");
+  const key = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const parse = k => { const [y,m,d] = k.split("-").map(Number); return new Date(y,m-1,d); };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const uid = () => "h" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const plural = (n, a, b) => n > 1 ? b : a;
+  const grad = t => {
+    t = ((t % 1) + 1) % 1;
+    for (let i = 0; i < STOPS.length - 1; i++) {
+      const [a, ca] = STOPS[i], [b, cb] = STOPS[i+1];
+      if (t >= a && t <= b) { const u = (t - a) / (b - a); return ca.map((v, j) => Math.round(v + (cb[j] - v) * u)); }
+    }
+    return STOPS[0][1];
+  };
+
+  let today = key(new Date());
+
+  function demoState() {
+    const t = new Date();
+    const start = key(new Date(t.getFullYear(), t.getMonth() - 1, 1));
+    const habits = [
+      { id: "h-muscu", name: "Musculation", created: start },
+      { id: "h-lecture", name: "Lecture", created: start },
+      { id: "h-marche", name: "Marche", created: start }
+    ];
+    const p = [0.7, 0.62, 0.84];
+    let seed = 11;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const log = {};
+    for (let d = parse(start); key(d) < today; d.setDate(d.getDate() + 1)) {
+      const ids = habits.filter((h, i) => rnd() < p[i]).map(h => h.id);
+      if (ids.length) log[key(d)] = ids;
+    }
+    return { habits, log, demo: true };
+  }
+
+  function loadLocal() {
+    try { const s = JSON.parse(localStorage.getItem(LS)); if (s && Array.isArray(s.habits)) return s; } catch (e) {}
+    return null;
+  }
+  function saveLocal() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
+
+  let state = loadLocal() || demoState();
+  if (!state.log) state.log = {};
+  const n0 = new Date();
+  const ui = { tab: "jour", filter: "all", y: n0.getFullYear(), m: n0.getMonth(), sel: today, confirm: null, edit: null, sync: "local", anim: "rise", sweep: true, pop: null };
+  let shownPct = 0;
+
+  /* ---------- calculs ---------- */
+  const habitsFor = () => ui.filter === "all" ? state.habits : state.habits.filter(h => h.id === ui.filter);
+  function dayFrac(k, hs) {
+    const on = hs.filter(h => h.created <= k);
+    if (!on.length) return null;
+    const done = state.log[k] || [];
+    return { c: on.filter(h => done.includes(h.id)).length, n: on.length };
+  }
+  function monthStats(y, m, hs) {
+    const len = new Date(y, m + 1, 0).getDate();
+    let done = 0, poss = 0, perfect = 0, past = 0;
+    const days = [];
+    for (let i = 1; i <= len; i++) {
+      const k = key(new Date(y, m, i));
+      if (k > today) { days.push({ k, future: true }); continue; }
+      past++;
+      const f = dayFrac(k, hs);
+      if (f) { done += f.c; poss += f.n; if (f.c === f.n) perfect++; }
+      days.push({ k, f });
+    }
+    return { days, done, poss, perfect, past, pct: poss ? Math.round(done / poss * 100) : 0 };
+  }
+  const full = (k, hs) => { const f = dayFrac(k, hs); return !!f && f.c === f.n; };
+  function streak(hs) {
+    const d = parse(today);
+    if (!full(today, hs)) d.setDate(d.getDate() - 1);
+    let s = 0;
+    while (s < 4000 && full(key(d), hs)) { s++; d.setDate(d.getDate() - 1); }
+    return s;
+  }
+  function bestStreak(hs) {
+    if (!hs.length) return 0;
+    const first = hs.reduce((a, h) => h.created < a ? h.created : a, today);
+    let best = 0, cur = 0;
+    for (let d = parse(first); key(d) <= today; d.setDate(d.getDate() + 1)) {
+      if (full(key(d), hs)) { cur++; best = Math.max(best, cur); } else cur = 0;
+    }
+    return best;
+  }
+
+  /* ---------- rendu ---------- */
+  const app = document.getElementById("app");
+  const tabsEl = document.getElementById("tabs");
+
+  function render() {
+    today = key(new Date());
+    tabsEl.dataset.on = ui.tab;
+    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === ui.tab)));
+    app.className = ui.anim ? `app anim ${ui.anim === "rise" ? "" : ui.anim}` : "app";
+    if (ui.tab === "jour") renderJour(); else renderRub();
+    ui.anim = null; ui.pop = null;
+  }
+
+  function renderJour() {
+    if (ui.filter !== "all" && !state.habits.some(h => h.id === ui.filter)) ui.filter = "all";
+    const now = new Date();
+    const hs = habitsFor();
+    const st = monthStats(ui.y, ui.m, hs);
+    const isCur = ui.y === now.getFullYear() && ui.m === now.getMonth();
+    const left = isCur ? st.days.length - now.getDate() : 0;
+    const sel = parse(ui.sel);
+    const selDone = state.log[ui.sel] || [];
+    const todayAll = dayFrac(today, state.habits);
+    const sk = streak(hs);
+
+    let note = "";
+    if (ui.filter === "all") {
+      let best = null;
+      state.habits.forEach(h => { const s = monthStats(ui.y, ui.m, [h]); if (s.poss && (!best || s.pct > best.pct)) best = { name: h.name, pct: s.pct }; });
+      if (best && state.habits.length > 1) note = `<b>${esc(best.name.toLowerCase())}</b> est ta rubrique la plus tenue ce mois, à ${best.pct} %`;
+    } else {
+      const b = bestStreak(hs);
+      note = `ton record pour cette rubrique est de <b>${b} ${plural(b, "jour", "jours")}</b> d'affilée`;
+    }
+
+    let i = 0;
+    const s = () => `class="st" style="--i:${i++}"`;
+
+    app.innerHTML = `
+      <header class="head" ${s()}>
+        <div class="brand">rituel</div>
+        <div class="date">${JOURS[now.getDay()]} ${now.getDate()} ${MOIS[now.getMonth()]}</div>
+      </header>
+
+      ${state.demo ? `
+      <div class="demo" ${s()}>
+        <div>Ce que tu vois est un exemple, pour te montrer la roue remplie. Tes trois rubriques sont déjà prêtes.</div>
+        <button class="link" id="start">effacer l'exemple et commencer</button>
+      </div>` : ""}
+
+      <div class="wheel-block" ${s()}>
+        ${state.habits.length > 1 ? `
+        <div class="chips-wrap"><div class="chips" role="group" aria-label="Filtrer par rubrique">
+          <button class="chip" data-filter="all" aria-pressed="${ui.filter === "all"}">tout</button>
+          ${state.habits.map(h => `<button class="chip" data-filter="${h.id}" aria-pressed="${ui.filter === h.id}">${esc(h.name)}</button>`).join("")}
+        </div></div>` : ""}
+        <div class="month">
+          <button id="prev" aria-label="Mois précédent">‹</button>
+          <span>${MOIS[ui.m]} ${ui.y}</span>
+          <button id="next" aria-label="Mois suivant" ${isCur ? "disabled" : ""}>›</button>
+        </div>
+        <div class="wheel-wrap">
+          <canvas id="wheel" aria-label="Roue du mois, un point par jour. Touche un point pour choisir ce jour, glisse pour changer de mois."></canvas>
+          <div class="center"><div><b>${sel.getDate()}</b><span>${ui.sel === today ? "aujourd'hui" : MOIS[sel.getMonth()]}</span></div></div>
+        </div>
+      </div>
+
+      <div class="score" ${s()}>
+        <div class="pct"><span id="pct">${shownPct}</span><small>%</small></div>
+        <div class="mention">du mois accompli<br>${st.done} ${plural(st.done, "case cochée", "cases cochées")} sur ${st.poss}</div>
+      </div>
+
+      <div class="stats" ${s()}>
+        <div class="stat"><b>${sk}</b><span>${plural(sk, "jour", "jours")} de série</span></div>
+        ${isCur
+          ? `<div class="stat"><b>${left}</b><span>${plural(left, "jour restant", "jours restants")}</span></div>`
+          : `<div class="stat"><b>${st.past}</b><span>jours suivis</span></div>`}
+        <div class="stat"><b>${st.perfect}</b><span>${plural(st.perfect, "jour parfait", "jours parfaits")}</span></div>
+      </div>
+
+      ${note ? `<p class="note" ${s()}>${note}</p>` : ""}
+
+      <section class="sect" ${s()}>
+        <div class="sect-h">
+          <div class="sect-t">${ui.sel === today ? `aujourd'hui${todayAll ? `, ${todayAll.c} sur ${todayAll.n}` : ""}` : `${JOURS[sel.getDay()]} ${sel.getDate()} ${MOIS[sel.getMonth()]}`}</div>
+          ${ui.sel !== today ? `<button class="link" id="back">revenir à aujourd'hui</button>` : ""}
+        </div>
+        ${state.habits.length ? `
+        <div class="list">
+          ${state.habits.map(h => {
+            const on = selDone.includes(h.id);
+            const ms = monthStats(ui.y, ui.m, [h]);
+            return `<button class="row${ui.pop === h.id ? " pop" : ""}" role="checkbox" aria-checked="${on}" data-toggle="${h.id}">
+              <span class="mark" aria-hidden="true"></span>
+              <span class="name">${esc(h.name)}</span>
+              <span class="count">${ms.done}/${ms.poss}</span>
+            </button>`;
+          }).join("")}
+        </div>` : `<div class="empty">Aucune rubrique pour l'instant. Ajoute la première dans l'onglet rubriques.</div>`}
+      </section>
+    `;
+
+    const from = ui.sweep ? 0 : shownPct;
+    if (from !== st.pct && !reduced()) countUp(from, st.pct, ui.sweep ? 900 : 500);
+    else document.getElementById("pct").textContent = st.pct;
+    shownPct = st.pct;
+    setWheel(st.days, ui.sweep);
+    ui.sweep = false;
+  }
+
+  function countUp(from, to, dur) {
+    const el = document.getElementById("pct"); const t0 = performance.now();
+    const step = t => {
+      if (!el.isConnected) return;
+      const u = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - u, 4);
+      el.textContent = Math.round(from + (to - from) * e);
+      if (u < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- roue animée ---------- */
+  const wv = { n: 0, cur: [], from: [], to: [], app: [], days: [], t0: 0, sweep: false, raf: 0 };
+  let hits = [];
+
+  function setWheel(days, sweep) {
+    const n = days.length;
+    const to = days.map(d => d.future ? 0 : (d.f ? d.f.c / d.f.n : 0));
+    const keep = wv.n === n && !sweep;
+    Object.assign(wv, {
+      n, to, days, sweep,
+      from: keep ? wv.cur.slice() : new Array(n).fill(0),
+      app: keep ? new Array(n).fill(1) : new Array(n).fill(0),
+      t0: performance.now()
+    });
+    wv.cur = wv.from.slice();
+    cancelAnimationFrame(wv.raf);
+    if (reduced()) { wv.cur = to.slice(); wv.app.fill(1); paint(); return; }
+    const tick = now => {
+      let done = true;
+      for (let i = 0; i < n; i++) {
+        const delay = sweep ? (i / n) * 520 : 0;
+        const u = Math.max(0, Math.min(1, (now - wv.t0 - delay) / 700));
+        const e = 1 - Math.pow(1 - u, 3);
+        wv.cur[i] = wv.from[i] + (wv.to[i] - wv.from[i]) * e;
+        if (sweep) wv.app[i] = e;
+        if (u < 1) done = false;
+      }
+      paint();
+      if (!done) wv.raf = requestAnimationFrame(tick);
+    };
+    wv.raf = requestAnimationFrame(tick);
+  }
+
+  function paint() {
+    const c = document.getElementById("wheel");
+    if (!c) return;
+    const size = c.clientWidth || 300;
+    const dpr = window.devicePixelRatio || 1;
+    if (c.width !== Math.round(size * dpr)) { c.width = Math.round(size * dpr); c.height = Math.round(size * dpr); }
+    const ctx = c.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, size, size);
+    const cx = size / 2, R = size / 2 - 3, r = R * 0.6, n = wv.n;
+    if (!n) return;
+    const step = size / 36;
+
+    for (let y = -R; y <= R; y += step) {
+      for (let x = -R; x <= R; x += step) {
+        const dist = Math.hypot(x, y);
+        if (dist > R || Math.abs(dist - r) < step * 1.1 || dist < R * 0.34) continue;
+        let a = Math.atan2(x, -y); if (a < 0) a += Math.PI * 2;
+        const t = a / (Math.PI * 2);
+        const i = Math.round(t * n) % n;
+        const fall = Math.exp(-Math.pow((dist - r) / (R * 0.3), 2));
+        const f = wv.cur[i] * fall;
+        const [cr, cg, cb] = grad(t);
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${0.14 + 0.76 * f})`;
+        ctx.beginPath(); ctx.arc(cx + x, cx + y, 0.8 + 1.3 * f, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    hits = [];
+    wv.days.forEach((d, i) => {
+      const t = i / n, a = t * Math.PI * 2;
+      const x = cx + Math.sin(a) * r, y = cx - Math.cos(a) * r;
+      const [cr, cg, cb] = grad(t);
+      const ap = wv.app[i];
+      let rad;
+      if (d.future) {
+        rad = 1.5 * ap;
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${0.35 * ap})`;
+      } else {
+        const f = wv.cur[i];
+        rad = (2.4 + f * 4.4) * (0.4 + 0.6 * ap);
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${(0.5 + 0.5 * f) * ap})`;
+      }
+      ctx.beginPath(); ctx.arc(x, y, Math.max(rad, 0.01), 0, Math.PI * 2); ctx.fill();
+      if (d.k === ui.sel && ap > 0.5) {
+        ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(x, y, Math.max(rad, 3) + 5, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (d.k === today) {
+        const tx = cx + Math.sin(a) * (r + 16), ty = cx - Math.cos(a) * (r + 16);
+        ctx.fillStyle = `rgba(255,255,255,${ap})`;
+        ctx.beginPath(); ctx.arc(tx, ty, 2, 0, Math.PI * 2); ctx.fill();
+      }
+      hits.push({ x, y, k: d.k, future: d.future });
+    });
+  }
+
+  function renderRub() {
+    const now = new Date();
+    let i = 0;
+    const s = () => `class="st" style="--i:${i++}"`;
+    app.innerHTML = `
+      <header class="head" ${s()}>
+        <div class="brand">rituel</div>
+        <div class="date">${state.habits.length} ${plural(state.habits.length, "rubrique", "rubriques")}</div>
+      </header>
+
+      <form class="add" id="addf" autocomplete="off" ${s()}>
+        <input id="newname" maxlength="40" placeholder="nouvelle rubrique" aria-label="Nom de la nouvelle rubrique">
+        <button class="link" type="submit">ajouter</button>
+      </form>
+
+      <div class="rlist">
+        ${state.habits.map(h => {
+          const ms = monthStats(now.getFullYear(), now.getMonth(), [h]);
+          if (ui.edit === h.id) return `
+            <div class="rrow" ${s()}>
+              <input id="ed-${h.id}" value="${esc(h.name)}" maxlength="40" aria-label="Nouveau nom">
+              <div class="meta"><button data-save="${h.id}">enregistrer</button><button data-cancel>annuler</button></div>
+            </div>`;
+          if (ui.confirm === h.id) return `
+            <div class="rrow" ${s()}>
+              <div class="name">supprimer ${esc(h.name.toLowerCase())} ?</div>
+              <div class="meta"><button data-del="${h.id}">oui, supprimer</button><button data-cancel>garder</button></div>
+            </div>`;
+          return `
+            <div class="rrow" ${s()}>
+              <div class="name">${esc(h.name)}</div>
+              <div class="meta"><span>${ms.pct} % ce mois</span><button data-edit="${h.id}">renommer</button><button data-ask="${h.id}">supprimer</button></div>
+            </div>`;
+        }).join("") || `<div class="empty" ${s()}>Aucune rubrique pour l'instant.</div>`}
+      </div>
+
+      <div class="meta" ${s()}>
+        <button id="fx-sound">${fx.sound ? "couper les sons" : "activer les sons"}</button>
+        <button id="fx-hap">${fx.haptic ? "couper les vibrations" : "activer les vibrations"}</button>
+      </div>
+
+      <div class="meta" ${s()}>
+        <button id="export">exporter une sauvegarde</button>
+        <button id="import">importer</button>
+      </div>
+      <input type="file" id="importfile" accept="application/json,.json" hidden>
+      ${ui.pendingImport ? `<div class="msg st" style="--i:${i++}">Remplacer tes données actuelles par cette sauvegarde (${ui.pendingImport.habits.length} ${plural(ui.pendingImport.habits.length, "rubrique", "rubriques")}) ?<div class="meta" style="margin-top:12px"><button id="import-yes">oui, remplacer</button><button id="import-no">annuler</button></div></div>` : ""}
+      ${ui.msg ? `<p class="msg st" style="--i:${i++}">${esc(ui.msg)}</p>` : ""}
+      <p class="foot" ${s()}>Tes données restent sur ce téléphone. Exporte une sauvegarde de temps en temps pour ne rien perdre.</p>
+    `;
+    if (ui.edit) { const inp = document.getElementById("ed-" + ui.edit); if (inp) { inp.focus(); inp.select(); } }
+  }
+
+  /* ---------- sons et vibrations ---------- */
+  const FXK = "rituel.fx";
+  const fx = (() => { try { return Object.assign({ sound: true, haptic: true }, JSON.parse(localStorage.getItem(FXK)) || {}); } catch (e) { return { sound: true, haptic: true }; } })();
+  const saveFx = () => { try { localStorage.setItem(FXK, JSON.stringify(fx)); } catch (e) {} };
+  let ac = null, master = null;
+  function audio() {
+    if (!fx.sound) return null;
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+      try {
+        ac = new AC();
+        const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 5200;
+        master = ac.createGain(); master.gain.value = 0.9;
+        master.connect(lp).connect(ac.destination);
+      } catch (e) { ac = null; return null; }
+    }
+    if (ac.state === "suspended") ac.resume();
+    return ac;
+  }
+  function tone(freq, o = {}) {
+    const a = audio(); if (!a) return;
+    const { type = "sine", dur = 0.14, gain = 0.07, at = 0, to = null } = o;
+    const t = a.currentTime + at;
+    const osc = a.createOscillator(), g = a.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, t);
+    if (to) osc.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g).connect(master); osc.start(t); osc.stop(t + dur + 0.03);
+  }
+  function swish(dir = 1, dur = 0.24) {
+    const a = audio(); if (!a) return;
+    const len = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, len, a.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+    const src = a.createBufferSource(); src.buffer = buf;
+    const bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.4;
+    const t = a.currentTime;
+    bp.frequency.setValueAtTime(dir > 0 ? 700 : 2600, t);
+    bp.frequency.exponentialRampToValueAtTime(dir > 0 ? 2600 : 700, t + dur);
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.05, t + dur * 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(bp).connect(g).connect(master); src.start(t); src.stop(t + dur);
+  }
+  // gamme pentatonique : les sons restent toujours harmonieux entre eux
+  const PENTA = [1, 9/8, 5/4, 3/2, 5/3];
+  const note = (i, base = 392) => base * PENTA[((i % 5) + 5) % 5] * Math.pow(2, Math.floor(i / 5));
+
+  let hapEl = null;
+  function haptic(pattern = 8) {
+    if (!fx.haptic) return;
+    if (typeof navigator.vibrate === "function") { try { navigator.vibrate(pattern); } catch (e) {} return; }
+    // iPhone : Safari ne propose pas l'API de vibration ; basculer un interrupteur natif déclenche le retour haptique du système
+    try {
+      if (!hapEl) {
+        hapEl = document.createElement("label");
+        hapEl.setAttribute("aria-hidden", "true");
+        hapEl.style.cssText = "position:fixed;left:-200px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none";
+        const inp = document.createElement("input");
+        inp.type = "checkbox"; inp.setAttribute("switch", ""); inp.tabIndex = -1;
+        hapEl.appendChild(inp); document.body.appendChild(hapEl);
+      }
+      hapEl.click();
+    } catch (e) {}
+  }
+
+  const sfx = {
+    tick()        { tone(1650, { dur: 0.035, gain: 0.035, type: "triangle" }); haptic(6); },
+    tab(dir)      { swish(dir); tone(dir > 0 ? 784 : 587, { dur: 0.09, gain: 0.03, at: 0.05 }); haptic(10); },
+    month(dir)    { swish(dir, 0.32); [0, 2, 4].forEach((s, k) => tone(note(dir > 0 ? 5 + s : 9 - s), { dur: 0.12, gain: 0.03, at: 0.04 + k * 0.05 })); haptic(12); },
+    day(i, n)     { tone(note(Math.round(i / Math.max(1, n - 1) * 9)), { dur: 0.16, gain: 0.05, type: "triangle" }); haptic(6); },
+    check(c, n)   { const b = Math.round(c / Math.max(1, n) * 6); tone(note(3 + b), { dur: 0.18, gain: 0.06, type: "triangle" }); tone(note(5 + b), { dur: 0.22, gain: 0.045, at: 0.06 }); haptic(14); },
+    uncheck()     { tone(440, { dur: 0.12, gain: 0.045, to: 300, type: "triangle" }); haptic(8); },
+    perfect()     { [0, 2, 4, 5, 7, 10].forEach((s, k) => tone(note(5 + s), { dur: 0.5, gain: 0.045, at: k * 0.07, type: k % 2 ? "sine" : "triangle" })); haptic([16, 60, 16, 60, 30]); },
+    add()         { tone(note(5), { dur: 0.12, gain: 0.05, type: "triangle" }); tone(note(8), { dur: 0.2, gain: 0.05, at: 0.08 }); haptic(12); },
+    remove()      { tone(note(8), { dur: 0.12, gain: 0.05, type: "triangle" }); tone(note(4), { dur: 0.22, gain: 0.05, at: 0.08 }); haptic([10, 50, 10]); },
+    start()       { [0, 4, 7, 9].forEach((s, k) => tone(note(3 + s), { dur: 0.6, gain: 0.04, at: k * 0.09 })); haptic([12, 50, 12]); }
+  };
+
+  /* ---------- actions ---------- */
+  function commit() { saveLocal(); render(); queueSave(); }
+
+  function goTab(to) {
+    if (to === ui.tab) return;
+    sfx.tab(to === "rub" ? 1 : -1);
+    ui.anim = to === "rub" ? "from-right" : "from-left";
+    ui.sweep = to === "jour";
+    ui.tab = to; ui.edit = null; ui.confirm = null; ui.msg = null; ui.pendingImport = null;
+    render(); window.scrollTo({ top: 0 });
+  }
+  function shiftMonth(d) {
+    const now = new Date();
+    let y = ui.y, m = ui.m + d;
+    if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; }
+    if (y > now.getFullYear() || (y === now.getFullYear() && m > now.getMonth())) return;
+    ui.y = y; ui.m = m; ui.sweep = true;
+    sfx.month(d);
+    render();
+  }
+
+  function toggle(id) {
+    const arr = (state.log[ui.sel] || []).slice();
+    const i = arr.indexOf(id);
+    if (i >= 0) arr.splice(i, 1); else {
+      arr.push(id);
+      const h = state.habits.find(x => x.id === id);
+      if (h && h.created > ui.sel) h.created = ui.sel;
+      ui.pop = id;
+    }
+    if (arr.length) state.log[ui.sel] = arr; else delete state.log[ui.sel];
+    const f = dayFrac(ui.sel, state.habits);
+    if (i >= 0) sfx.uncheck();
+    else if (f && f.c === f.n && f.n > 1) sfx.perfect();
+    else sfx.check(f ? f.c : 1, f ? f.n : 1);
+    commit();
+  }
+
+  app.addEventListener("click", e => {
+    const t = e.target.closest("button"); if (!t) return;
+    if (t.id === "start") {
+      state = { habits: state.habits.map(h => ({ ...h, created: today })), log: {}, demo: false };
+      ui.sel = today; ui.anim = "rise"; ui.sweep = true; sfx.start(); commit(); return;
+    }
+    if (t.id === "export") { exportData(); return; }
+    if (t.id === "import") { sfx.tick(); document.getElementById("importfile").click(); return; }
+    if (t.id === "import-yes") { state = ui.pendingImport; if (!state.log) state.log = {}; ui.pendingImport = null; ui.msg = "Sauvegarde importée."; ui.sel = today; ui.filter = "all"; sfx.start(); commit(); return; }
+    if (t.id === "import-no") { ui.pendingImport = null; sfx.tick(); render(); return; }
+    if (t.id === "fx-sound") { fx.sound = !fx.sound; saveFx(); if (fx.sound) sfx.add(); render(); return; }
+    if (t.id === "fx-hap") { fx.haptic = !fx.haptic; saveFx(); if (fx.haptic) haptic([12, 50, 12]); else sfx.tick(); render(); return; }
+    if (t.id === "prev") { shiftMonth(-1); return; }
+    if (t.id === "next") { shiftMonth(1); return; }
+    if (t.id === "back") { sfx.tab(-1); const n = new Date(); ui.sel = today; ui.sweep = ui.y !== n.getFullYear() || ui.m !== n.getMonth(); ui.y = n.getFullYear(); ui.m = n.getMonth(); render(); return; }
+    if (t.dataset.filter) { if (ui.filter !== t.dataset.filter) { ui.filter = t.dataset.filter; ui.sweep = true; swish(1, 0.18); sfx.tick(); render(); } return; }
+    if (t.dataset.toggle) { toggle(t.dataset.toggle); return; }
+    if (t.dataset.edit) { sfx.tick(); ui.edit = t.dataset.edit; ui.confirm = null; render(); return; }
+    if (t.dataset.save) {
+      const v = document.getElementById("ed-" + t.dataset.save).value.trim();
+      const h = state.habits.find(x => x.id === t.dataset.save);
+      if (h && v) h.name = v;
+      sfx.add(); ui.edit = null; commit(); return;
+    }
+    if (t.dataset.ask) { sfx.tick(); ui.confirm = t.dataset.ask; ui.edit = null; render(); return; }
+    if ("cancel" in t.dataset) { sfx.tick(); ui.confirm = null; ui.edit = null; render(); return; }
+    if (t.dataset.del) {
+      sfx.remove();
+      const id = t.dataset.del;
+      state.habits = state.habits.filter(h => h.id !== id);
+      for (const k in state.log) { state.log[k] = state.log[k].filter(x => x !== id); if (!state.log[k].length) delete state.log[k]; }
+      if (ui.filter === id) ui.filter = "all";
+      ui.confirm = null; commit(); return;
+    }
+  });
+
+  app.addEventListener("submit", e => {
+    e.preventDefault();
+    const v = document.getElementById("newname").value.trim(); if (!v) return;
+    state.habits.push({ id: uid(), name: v, created: today });
+    sfx.add();
+    commit();
+    const n = document.getElementById("newname"); if (n) n.focus();
+  });
+
+  app.addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.id && e.target.id.startsWith("ed-")) {
+      e.preventDefault(); document.querySelector(`[data-save="${e.target.id.slice(3)}"]`)?.click();
+    }
+    if (e.key === "Escape" && (ui.edit || ui.confirm)) { ui.edit = null; ui.confirm = null; render(); }
+  });
+
+  /* toucher un jour sur la roue */
+  let pd = null;
+  app.addEventListener("pointerdown", e => { pd = { x: e.clientX, y: e.clientY }; });
+  app.addEventListener("pointerup", e => {
+    if (e.target.id !== "wheel" || !pd) return;
+    if (Math.hypot(e.clientX - pd.x, e.clientY - pd.y) > 10) return;
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    let best = null, bd = 22;
+    hits.forEach(h => { const d = Math.hypot(h.x - x, h.y - y); if (d < bd && !h.future) { bd = d; best = h; } });
+    if (best && best.k !== ui.sel) { sfx.day(hits.indexOf(best), hits.length); ui.sel = best.k; render(); }
+  });
+
+  /* glisser : sur la roue on change de mois, ailleurs on change d'onglet */
+  let ts = null;
+  app.addEventListener("touchstart", e => { const t = e.touches[0]; ts = { x: t.clientX, y: t.clientY, el: e.target }; }, { passive: true });
+  app.addEventListener("touchend", e => {
+    if (!ts) return;
+    const t = e.changedTouches[0], dx = t.clientX - ts.x, dy = t.clientY - ts.y, el = ts.el; ts = null;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > 50 || el.closest(".chips") || el.tagName === "INPUT") return;
+    if (el.id === "wheel" && ui.tab === "jour") shiftMonth(dx < 0 ? 1 : -1);
+    else goTab(dx < 0 ? "rub" : "jour");
+  }, { passive: true });
+
+  document.querySelector(".tabs").addEventListener("click", e => {
+    const t = e.target.closest("[data-tab]"); if (t) goTab(t.dataset.tab);
+  });
+
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(paint, 120); });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && key(new Date()) !== today) { ui.sel = key(new Date()); ui.sweep = true; render(); }
+  });
+
+  /* ---------- sauvegarde locale ---------- */
+  function queueSave() {}
+  async function exportData() {
+    const name = `rituel-${today}.json`;
+    const file = new File([JSON.stringify(state)], name, { type: "application/json" });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Sauvegarde Rituel" });
+        ui.msg = "Sauvegarde exportée. Range-la dans Fichiers ou envoie-la-toi.";
+      } else {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(file); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        ui.msg = "Sauvegarde téléchargée.";
+      }
+      sfx.add();
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      ui.msg = "L'export n'a pas abouti. Réessaie depuis Safari ou depuis l'app installée.";
+    }
+    render();
+  }
+  app.addEventListener("change", e => {
+    if (e.target.id !== "importfile" || !e.target.files[0]) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result);
+        if (!d || !Array.isArray(d.habits) || typeof d.log !== "object") throw 0;
+        ui.pendingImport = d; ui.msg = null; sfx.tick();
+      } catch (err) { ui.msg = "Ce fichier n'est pas une sauvegarde Rituel."; sfx.uncheck(); }
+      render();
+    };
+    r.readAsText(e.target.files[0]);
+  });
+
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+
+  render();
+  if (document.fonts) document.fonts.ready.then(paint);
+})();
+</script>
+
+</body>
+</html>
